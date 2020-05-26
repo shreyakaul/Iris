@@ -235,3 +235,58 @@ legend("topleft",legend=c("Training Error", "Validation-Set","LOOCV","5-Fold CV"
 ```
 
 From the above plots, it can be seen that lowest test error will be for the values of K between 0-20.
+
+```{r}
+#LDA
+
+iris_df <- rbind(iris[,c('Sepal.Length', 'Petal.Width','Species')])
+lda_iris <- lda(iris_df$Species~., iris_df)
+lda_iris
+```
+
+```{r}
+iris_lda_value <- predict(lda_iris)
+iris_df_plot_lda <- iris_df
+for (i in 1:150) {
+    iris_df_plot_lda$classification <- ifelse(iris_df$Species != iris_lda_value$class,"mismatch",
+                               ifelse 
+                               (iris_df$Species == "setosa","setosa",
+                                 ifelse
+                                 (iris_df$Species == "versicolor","versicolor",
+                                   ifelse
+                                   (iris_df$Species == "virginica","virginica",NA))))
+
+}
+
+gg <- ggplot(iris_df_plot_lda, aes(iris_df_plot_lda$Sepal.Length, iris_df_plot_lda$Petal.Width, col=iris_df_plot_lda$classification)) + geom_point() + labs(title="Linear Discriminant Analysis", x="Sepal Length", y="Petal Width") + scale_color_discrete(name="Species Classification")
+print(gg)
+confusionMatrix(iris_lda_value$class, iris_df$Species)
+```
+
+```{r}
+iris_df <- rbind(iris[,c('Sepal.Length', 'Petal.Width','Species')])
+qda_iris <- qda(iris_df$Species~., iris_df)
+qda_iris
+```
+
+```{r}
+iris_qda_value <- predict(qda_iris)
+for (i in 1:150) {
+    iris_qda_value$classification <- ifelse(iris_df$Species != iris_qda_value$class,"mismatch",
+                               ifelse 
+                               (iris_df$Species == "setosa","setosa",
+                                 ifelse
+                                 (iris_df$Species == "versicolor","versicolor",
+                                   ifelse
+                                   (iris_df$Species == "virginica","virginica",NA))))
+
+}
+iris_df_plot_qda <- iris_df
+iris_df_plot_qda$classification <- iris_qda_value$classification
+gg <- ggplot(iris_df, aes(iris_df_plot_qda$Sepal.Length, iris_df_plot_qda$Petal.Width, col=iris_df_plot_qda$classification)) + geom_point() + labs(title="Quadratic Discriminant Analysis", x="Sepal Length", y="Petal Width") + scale_colour_discrete(name="Species Classification")
+print(gg)
+confusionMatrix(iris_df$Species, iris_qda_value$class)
+```
+
+Out of the LDA and QDA models, QDA gave the smaller training error. QDA has more variance and therefore is more flexible. So, it fits better on the training data. If we consider bias-variance trade-off, then as the variance increases the training error decreases.\newline
+LDA is less flexible than QDA as in LDA the number of parameters are less. Due to more parameters, QDA has high variance. If the number of observations in training data are more then LDA will give a smaller test error as QDA will have higher variance and may result in overfitting of model. But if the classes have a different covariance matrix, then LDA will face high bias on the dataset and QDA will have lower test error.\newline
