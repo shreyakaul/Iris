@@ -1,0 +1,77 @@
+---
+title: "Iris Dataset"
+author: "Shreya Kaul"
+output: 'pdf document'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r Setup, message=FALSE}
+# Load standard libraries
+library(tidyverse)
+library(datasets)
+library(ggplot2)
+library(MASS)
+library(klaR)
+library(stringr)
+library(ISLR)
+library(caret)
+library(dummies)
+library(class)
+library(scales)
+library(boot)
+library(glmnet)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+#Dataset -Iris
+data(iris)
+my_x1 <- iris$Sepal.Length
+my_x2 <- iris$Petal.Length
+my_y <- as.factor(iris$Species)
+```
+
+```{r}
+#Classification Tress
+tree_sample <- sample(1:110, replace=FALSE)
+train_data <- iris[tree_sample,c('Species','Sepal.Length','Petal.Length')]
+test_data <- iris[-tree_sample,c('Species','Sepal.Length','Petal.Length')]
+train_tree <- rpart(train_data$Species~.,data = train_data, method = 'class')
+rpart.plot(train_tree)
+fit <- predict(train_tree, test_data, type='class')
+```
+
+```{r}
+table_mat <- table(test_data$Species , fit)
+print(table_mat)
+accu <- sum(diag(table_mat)) / sum(table_mat) * 100
+print(paste0("Accuracy of the model: ", accu," %"))
+```
+
+```{r}
+set.seed(123)
+k_seq <- seq(1:((nrow(iris)/2)))
+
+train_error_seq <- vector('list', length = length(k_seq))
+
+for (i in k_seq)
+{
+
+k <- k_seq[i]
+
+training_prediction <- knn(train=data.frame(my_x1,my_x2),test=data.frame(my_x1,my_x2),cl=my_y,k=k)
+
+training_error <- mean(training_prediction!=my_y)
+
+train_error_seq[i] <- training_error
+
+}
+#Plotting of KNN Training Error for different values of K
+plot(x = k_seq, y=unlist(train_error_seq), type='l', xlab='Value of K', ylab='Training Error', main='KNN Training Error') 
+lines(x = k_seq, y=unlist(train_error_seq), col = "blue")
+
+```
+
