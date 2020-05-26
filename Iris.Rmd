@@ -75,3 +75,163 @@ lines(x = k_seq, y=unlist(train_error_seq), col = "blue")
 
 ```
 
+```{r}
+#Validation set approach
+
+#Randomizing data and Splitting into test and train data
+set.seed(123)
+iris_random <- sample(1:nrow(iris), replace = FALSE)
+iris_random_sample <- iris[iris_random,]
+iris_random_train_class <- rbind(iris_random_sample[1:75,c('Species')])
+iris_random_test_class <- rbind(iris_random_sample[76:150,c('Species')])
+iris_random_train <- rbind(iris_random_sample[1:75,c('Sepal.Length','Petal.Length')])
+iris_random_test <- rbind(iris_random_sample[76:150,c('Sepal.Length','Petal.Length')])
+
+#Test error using Validation Set Approach
+train_error_val <- vector()
+k_seq <- seq(1:((nrow(iris)/2)))
+for (i in k_seq)
+{
+
+k <- k_seq[i]
+
+training_prediction_val <- knn(train=iris_random_train,test=iris_random_test,cl=iris_random_train_class,k=k)
+
+training_error_val <- mean(training_prediction_val!=iris_random_test_class)
+
+train_error_val[i] <- training_error_val
+
+}
+
+#Plotting of test error using validation set approach
+plot(x = k_seq, y=unlist(train_error_val), type='l', xlab='Value of K', ylab='Test Error', main='Test error using Validation Set Approach')
+lines(x = k_seq, y=unlist(train_error_val), col="pink")
+
+```
+
+```{r}
+#Leave one out CV
+
+train_error_loocv <- vector()
+k_seq <- seq(1:((nrow(iris)/2)))
+train_error <- vector()
+
+#Loop for K-values
+for (j in k_seq)
+{
+#Train and test dataset
+for (i in 1:nrow(iris))
+{
+iris_loocv_train_class <- rbind(iris[-i,c('Species')])
+iris_loocv_test_class <- rbind(iris[i,c('Species')])
+iris_loocv_train <- rbind(iris[-i,c('Sepal.Length','Petal.Length')])
+iris_loocv_test <- rbind(iris[i,c('Sepal.Length','Petal.Length')])
+
+
+training_prediction_loocv <- knn(train=iris_loocv_train,test=iris_loocv_test,cl=iris_loocv_train_class,k=j)
+
+training_error_loocv <- mean(training_prediction_loocv!=iris_loocv_test_class)
+
+train_error_loocv[i] <- training_error_loocv
+}
+  train_error[j] <- mean(train_error_loocv)
+}
+
+#Plotting of test error using Leave one out approach
+plot(x = k_seq, y=unlist(train_error), type='l', xlab='Value of K', ylab='Test Error', main='Test error using Leave-One-Out Approach') 
+lines(x = k_seq, y=unlist(train_error), col="green")
+```
+
+```{r}
+#5-Fold CV
+training_error_kfold <- vector()
+train_error_kfold <- vector()
+kfold_error <- vector()
+k_seq <- seq(1:((nrow(iris)/2)))
+
+#Shuffling data randomly
+set.seed(123)
+iris_random_kfold <- sample(1:nrow(iris), replace = FALSE)
+iris_sample_kfold <- iris[iris_random_kfold,]
+
+#Creating 5 folds
+folds <- cut(seq(1,nrow(iris_sample_kfold)),breaks=5,labels=FALSE)
+
+
+for (j in k_seq) {
+  
+
+#Perform CV
+for (i in 1:5) {
+  test_index <- which(folds==i,arr.ind = TRUE)
+  kfold_test_data <- iris_sample_kfold[test_index,c('Sepal.Length','Petal.Length')]
+  kfold_train_data <- iris_sample_kfold[-test_index,c('Sepal.Length','Petal.Length')]
+  kfold_test_class <- iris_sample_kfold[test_index,c('Species')]
+  kfold_train_class <- iris_sample_kfold[-test_index,c('Species')]
+  
+  training_prediction_kfold <- knn(train=kfold_train_data,test=kfold_test_data,cl=kfold_train_class,k=j)
+  training_error_kfold <- mean(training_prediction_kfold!=kfold_test_class)
+
+train_error_kfold[i] <- training_error_kfold
+
+}
+  kfold_error[j] <- mean(train_error_kfold)
+}
+#Plotting of test error using 5-fold cross validation for different values of K
+plot(x = k_seq, y=unlist(kfold_error), type='l', xlab='Value of K', ylab='Test Error', main='Test error using 5-Fold Cross validation') 
+lines(x = k_seq, y=unlist(kfold_error), col="orange")
+```
+
+```{r}
+#10-Fold CV
+training_error_kfold <- vector()
+train_error_kfold <- vector()
+kfold_error2 <- vector()
+k_seq <- seq(1:((nrow(iris)/2)))
+
+#Shuffling data randomly
+set.seed(123)
+iris_random_kfold <- sample(1:nrow(iris), replace = FALSE)
+iris_sample_kfold <- iris[iris_random_kfold,]
+
+#Creating  folds
+folds <- cut(seq(1,nrow(iris_sample_kfold)),breaks=10,labels=FALSE)
+
+for (j in seq_along(k_seq)) {
+  
+
+#Perform CV
+for (i in 1:10) {
+  test_index <- which(folds==i,arr.ind = TRUE)
+  kfold_test_data <- iris_sample_kfold[test_index,c('Sepal.Length','Petal.Length')]
+  kfold_train_data <- iris_sample_kfold[-test_index,c('Sepal.Length','Petal.Length')]
+  kfold_test_class <- iris_sample_kfold[test_index,c('Species')]
+  kfold_train_class <- iris_sample_kfold[-test_index,c('Species')]
+  
+  training_prediction_kfold <- knn(train=kfold_train_data,test=kfold_test_data,cl=kfold_train_class,k=j)
+  training_error_kfold <- mean(training_prediction_kfold!=kfold_test_class)
+
+train_error_kfold[i] <- training_error_kfold
+
+}
+  kfold_error2[j] <- mean(train_error_kfold)
+}
+#Plotting of test error using 10-fold cross validation for different values of K
+plot(x = k_seq, y=unlist(kfold_error2), type='l', xlab='Value of K', ylab='Test Error', main='Test error using 10-Fold Cross validation') 
+lines(x = k_seq, y=unlist(kfold_error2), col="red")
+```
+
+```{r}
+#Combining all the plots together
+plot(x = k_seq, y=unlist(train_error_seq), type='l', xlab='Value of K', ylab='Error', main='K-Value vs Error',ylim=c(0.00,0.25)) 
+lines(x = k_seq, y=unlist(train_error_seq), col = "blue")
+lines(x = k_seq, y=unlist(train_error_val), col="pink")
+lines(x = k_seq, y=unlist(train_error), col="green")
+lines(x = k_seq, y=unlist(kfold_error2), col="red")
+lines(x = k_seq, y=unlist(kfold_error), col="orange")
+legend("topleft",legend=c("Training Error", "Validation-Set","LOOCV","5-Fold CV","10-Fold CV"),
+       col=c("blue", "pink","green","orange","red"), lty=1:1, cex=0.8)
+
+```
+
+From the above plots, it can be seen that lowest test error will be for the values of K between 0-20.
